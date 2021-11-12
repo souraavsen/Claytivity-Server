@@ -23,9 +23,9 @@ async function run() {
 
     const database = client.db("Claytivity");
     const useProductsCollection = database.collection("Products");
+    const useOrdersCollection = database.collection("Orders");
 
-    
-//Product CRD, Details
+    //Product CRD, Details
     // Get method for all products
     app.get("/all-products", async (req, res) => {
       const products = await useProductsCollection.find({}).toArray();
@@ -45,15 +45,55 @@ async function run() {
       const productData = await useProductsCollection.insertOne(req.body);
       res.json(productData);
     });
-      
+
     app.delete("/delete-product/:id", async (req, res) => {
-        const productId = req.params.id;
-        const filterProduct = { _id: ObjectId(productId) };
-        const result = await useProductsCollection.deleteOne(filterProduct);
-        console.log("Product Deleted", result);
-        res.json(result);
+      const productId = req.params.id;
+      const filterProduct = { _id: ObjectId(productId) };
+      const result = await useProductsCollection.deleteOne(filterProduct);
+      console.log("Product Deleted", result);
+      res.json(result);
     });
-      
+
+    //Order CRUD, Details
+    //get all orders
+    app.get("/all-orders", async (req, res) => {
+      const bookings = await useOrdersCollection.find({}).toArray();
+      res.send(bookings);
+    });
+
+    //post order
+    app.post("/add-booking", async (req, res) => {
+      const itemData = await useOrdersCollection.insertOne(req.body);
+      res.json(itemData);
+    });
+
+    // Update Order
+    app.put("/order/update/:id", async (req, res) => {
+      const filter = { _id: ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: req.body.status,
+        },
+      };
+      const result = await useOrdersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    // DELETE a order
+    app.delete("/remove-order/:id", async (req, res) => {
+      const bookingId = req.params.id;
+      const bookedplan = { _id: ObjectId(bookingId) };
+      const result = await useOrdersCollection.deleteOne(bookedplan);
+      console.log("Delete User", result);
+      res.json(result);
+    });
+
+
   } finally {
     // await client.close();
   }
