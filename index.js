@@ -25,6 +25,35 @@ async function run() {
     const useProductsCollection = database.collection("Products");
 
     
+//Product CRD, Details
+    // Get method for all products
+    app.get("/all-products", async (req, res) => {
+      const products = await useProductsCollection.find({}).toArray();
+      res.send(products);
+    });
+
+    // // product DETAILS
+    app.get("/product-details/:id", async (req, res) => {
+      const ID = req.params.id;
+      const product = { _id: ObjectId(ID) };
+      const productDetails = await useProductsCollection.findOne(product);
+      res.send(productDetails);
+    });
+
+    //POST new product
+    app.post("/add-products", async (req, res) => {
+      const productData = await useProductsCollection.insertOne(req.body);
+      res.json(productData);
+    });
+      
+    app.delete("/delete-product/:id", async (req, res) => {
+        const productId = req.params.id;
+        const filterProduct = { _id: ObjectId(productId) };
+        const result = await useProductsCollection.deleteOne(filterProduct);
+        console.log("Product Deleted", result);
+        res.json(result);
+    });
+      
   } finally {
     // await client.close();
   }
