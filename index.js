@@ -41,7 +41,7 @@ async function run() {
     });
 
     //POST new product
-    app.post("/add-products", async (req, res) => {
+    app.post("/add-product", async (req, res) => {
       const productData = await useProductsCollection.insertOne(req.body);
       res.json(productData);
     });
