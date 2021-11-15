@@ -24,12 +24,14 @@ async function run() {
     const database = client.db("Claytivity");
     const useProductsCollection = database.collection("Products");
     const useOrdersCollection = database.collection("Orders");
+    const useReviewsCollection = database.collection("Reviews");
+    const useUsersCollection = database.collection("Users");
 
     //Product CRD, Details
     // Get method for all products
     app.get("/all-products", async (req, res) => {
       const products = await useProductsCollection.find({}).toArray();
-      res.send(products);
+      res.json(products);
     });
 
     // // product DETAILS
@@ -37,7 +39,7 @@ async function run() {
       const ID = req.params.id;
       const product = { _id: ObjectId(ID) };
       const productDetails = await useProductsCollection.findOne(product);
-      res.send(productDetails);
+      res.json(productDetails);
     });
 
     //POST new product
@@ -50,15 +52,14 @@ async function run() {
       const productId = req.params.id;
       const filterProduct = { _id: ObjectId(productId) };
       const result = await useProductsCollection.deleteOne(filterProduct);
-      console.log("Product Deleted", result);
       res.json(result);
     });
 
     //Order CRUD, Details
     //get all orders
     app.get("/all-orders", async (req, res) => {
-      const bookings = await useOrdersCollection.find({}).toArray();
-      res.send(bookings);
+      const orders = await useOrdersCollection.find({}).toArray();
+      res.json(orders);
     });
 
     //post order
@@ -81,7 +82,7 @@ async function run() {
         updateDoc,
         options
       );
-      res.send(result);
+      res.json(result);
     });
 
     // DELETE a order
@@ -89,20 +90,71 @@ async function run() {
       const bookingId = req.params.id;
       const bookedplan = { _id: ObjectId(bookingId) };
       const result = await useOrdersCollection.deleteOne(bookedplan);
-      console.log("Delete User", result);
       res.json(result);
+    });
+
+    //Review CRUD, Details
+    //get all orders
+    app.get("/all-reviews", async (req, res) => {
+      const reviews = await useReviewsCollection.find({}).toArray();
+      res.json(reviews);
+    });
+
+    //post order
+    app.post("/add-review", async (req, res) => {
+      const reviewData = await useReviewsCollection.insertOne(req.body);
+      res.json(reviewData);
+    });
+
+    //For User operations
+    //Saving user information in database
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const result = await useUsersCollection.insertOne(user);
+      res.json(result);
+    });
+
+    //update and store the users
+    app.put("/users", async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const options = { upsert: true };
+      const updateDoc = { $set: user };
+      const result = await useUsersCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.json(result);
+    });
+
+    //set the admin role
+    app.put("/users/admin", async (req, res) => {
+      const user = req.body;
+      const filter = { email: user.email };
+      const updateDoc = { $set: { role: "admin" } };
+      const result = await useUsersCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+
+    //checking the admin
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await useUsersCollection.findOne(query);
+
+      res.json(user);
     });
 
 
   } finally {
-    // await client.close();
   }
 }
 
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Claytivity Server is UP and Running");
+  res.json("Claytivity Server is UP and Running");
 });
 
 app.listen(port, () => {
