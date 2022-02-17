@@ -9,6 +9,8 @@ require("dotenv").config();
 const cors = require("cors");
 app.use(cors());
 app.use(express.json());
+// app.use(express.static("public"));
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wfxhs.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
@@ -63,9 +65,17 @@ async function run() {
     });
 
     //post order
-    app.post("/add-booking", async (req, res) => {
+    app.post("/add-order", async (req, res) => {
       const itemData = await useOrdersCollection.insertOne(req.body);
       res.json(itemData);
+    });
+
+    //Order Details
+    app.get("/order-details/:id", async (req, res) => {
+      const ID = req.params.id;
+      const orderID = { _id: ObjectId(ID) };
+      const orderDetails = await useOrdersCollection.findOne(orderID);
+      res.json(orderDetails);
     });
 
     // Update Order
@@ -85,12 +95,30 @@ async function run() {
       res.json(result);
     });
 
+
     // DELETE a order
     app.delete("/remove-order/:id", async (req, res) => {
       const bookingId = req.params.id;
       const bookedplan = { _id: ObjectId(bookingId) };
       const result = await useOrdersCollection.deleteOne(bookedplan);
       res.json(result);
+    });
+
+    // Payment API
+    app.post("/create-payment-intent", async (req, res) => {
+      const paymentDetails = req.body;
+      console.log(paymentDetails);
+      const amount = paymentDetails.price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      console.log(paymentIntent);
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+      });
     });
 
     //Review CRUD, Details
@@ -145,8 +173,6 @@ async function run() {
 
       res.json(user);
     });
-
-
   } finally {
   }
 }
