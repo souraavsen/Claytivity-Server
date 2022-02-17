@@ -95,6 +95,19 @@ async function run() {
       res.json(result);
     });
 
+    app.put("/order-payment/update/:id", async (req, res) => {
+      const filter = { _id: ObjectId(req.params.id) };
+      const payment = req.body;
+      console.log(payment);
+      const updateDoc = {
+        $set: {
+          paid: true,
+          payment: payment,
+        },
+      };
+      const result = await useOrdersCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
 
     // DELETE a order
     app.delete("/remove-order/:id", async (req, res) => {
